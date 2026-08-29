@@ -20,7 +20,7 @@ class TransactionCategorySeeder extends Seeder
             'Groceries',
             'Health',
             'Transport',
-            'Savings'
+            'Savings',
         ];
 
         foreach($categories as $category) {

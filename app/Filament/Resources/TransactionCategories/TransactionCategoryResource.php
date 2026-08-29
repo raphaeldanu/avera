@@ -13,12 +13,16 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
+use Illuminate\Database\Eloquent\Builder;
 
 class TransactionCategoryResource extends Resource
 {
     protected static ?string $model = TransactionCategory::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Settings';
 
     protected static ?string $recordTitleAttribute = 'name';
 
@@ -46,5 +50,10 @@ class TransactionCategoryResource extends Resource
             'create' => CreateTransactionCategory::route('/create'),
             'edit' => EditTransactionCategory::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->where('user_id', auth()->id());
     }
 }

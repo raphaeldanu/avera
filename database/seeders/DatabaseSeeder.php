@@ -2,9 +2,12 @@
 
 namespace Database\Seeders;
 
+use App\Models\TransactionCategory;
+use App\Models\User;
 use Database\Seeders\TransactionCategorySeeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -15,15 +18,30 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        // User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
-
-        $this->call([
-            TransactionCategorySeeder::class
+        $user = User::create([
+            'name' => 'Raphael Adhimas',
+            'email' => 'raphaeldanu@gmail.com',
+            'password' => Hash::make('raphaeldanu@gmail.com'),
         ]);
+
+        $categories = [
+            'Offerings',
+            'Utilities',
+            'Subscription',
+            'Entertainment',
+            'Groceries',
+            'Health',
+            'Transport',
+            'Savings',
+            'My Future Wife',
+            'Other',
+        ];
+
+        foreach($categories as $category) {
+            TransactionCategory::create([
+                'user_id' => $user->id,
+                'name' => $category,
+            ]);
+        }
     }
 }
