@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Transaction;
+use App\Models\Wallet;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -11,13 +13,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('transaction_categories', function (Blueprint $table) {
+        Schema::create('transaction_entries', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->string('name');
+            $table->foreignIdFor(Transaction::class);
+            $table->foreignIdFor(Wallet::class);
+            $table->decimal('amount', 20, 2);
             $table->timestamps();
 
-            $table->unique(['user_id', 'name']);
+            $table->index(['wallet_id', 'transaction_id']);
         });
     }
 
@@ -26,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('transaction_categories');
+        Schema::dropIfExists('transaction_entries');
     }
 };
