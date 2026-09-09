@@ -4,6 +4,7 @@ namespace App\Filament\Resources\TransactionCategories\Pages;
 
 use App\Filament\Resources\TransactionCategories\TransactionCategoryResource;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Facades\Auth;
 
 class CreateTransactionCategory extends CreateRecord
 {
@@ -11,7 +12,7 @@ class CreateTransactionCategory extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['user_id'] = auth()->id();
+        $data['user_id'] = Auth::id();
 
         return $data;
     }
