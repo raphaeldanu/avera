@@ -13,10 +13,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'type',
     'transaction_date',
     'title',
-    'description'
+    'description',
+    'amount',
 ])]
 class Transaction extends Model
 {
+    protected function casts(): array
+    {
+        return [
+            'amount' => 'decimal:2',
+        ];
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -30,5 +38,10 @@ class Transaction extends Model
     public function transactionEntries(): HasMany
     {
         return $this->hasMany(TransactionEntry::class, 'transaction_id');
+    }
+
+    public function getEntriesTotalAttribute(): float
+    {
+        return (float) $this->transactionEntries->sum('amount');
     }
 }
