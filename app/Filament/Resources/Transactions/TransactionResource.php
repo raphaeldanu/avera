@@ -54,6 +54,6 @@ class TransactionResource extends Resource
     {
         return parent::getEloquentQuery()
             ->where('user_id', Auth::id())
-            ->with(['transactionEntries.wallet']);
+            ->with(['wallet']);
     }
 }

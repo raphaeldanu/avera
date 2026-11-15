@@ -13,13 +13,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class TransactionEntry extends Model
 {
-    protected function casts(): array
-    {
-        return [
-            'amount' => 'decimal:2',
-        ];
-    }
-
     public function transaction(): BelongsTo
     {
         return $this->belongsTo(Transaction::class);

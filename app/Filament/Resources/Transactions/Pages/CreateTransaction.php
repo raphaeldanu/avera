@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Transactions\Pages;
 
+use App\Filament\Resources\Transactions\Schemas\TransactionForm;
 use App\Filament\Resources\Transactions\TransactionResource;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Auth;
@@ -14,7 +15,7 @@ class CreateTransaction extends CreateRecord
     {
         $data['user_id'] = Auth::id();
 
-        return $data;
+        return TransactionForm::normalizeWalletId($data);
     }
 
     protected function getRedirectUrl(): string
