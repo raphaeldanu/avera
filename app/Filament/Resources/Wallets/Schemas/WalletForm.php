@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Wallets\Schemas;
 use App\Enums\WalletType;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 use Filament\Support\RawJs;
 
@@ -24,10 +23,14 @@ class WalletForm
                 TextInput::make('initial_balance')
                     ->required()
                     ->numeric()
+                    ->minValue(0)
                     ->default(0)
                     ->prefix('Rp')
                     ->mask(RawJs::make('$money($input)'))
-                    ->stripCharacters(','),
+                    ->stripCharacters(',')
+                    ->validationMessages([
+                        'min' => 'The initial balance cannot be negative.',
+                    ]),
             ]);
     }
 }
