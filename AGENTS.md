@@ -421,3 +421,18 @@ livewire(ListUsers::class)
   - `$view`: `protected string` (not `protected static string`) on `Page` and `Widget` classes
 
 </laravel-boost-guidelines>
+
+## Skills
+
+Load the skill by ID with the `skill` tool before the matching work starts. Do not wait for the user to name it.
+
+- Before changing code (writing, fixing, refactoring): load `ponytail`.
+- Before finishing a change or reviewing a diff/branch/PR: load `ponytail-review`.
+- New or changed behavior: load `tdd`.
+- Branch, PR, or "review since X": load `code-review`.
+- Repository-wide audit or "what can I delete": load `ponytail-audit`.
+- Before writing or editing tests: load `testing-best-practices`.
+- Before writing or editing Laravel PHP: load `laravel-best-practices`.
+- Before writing Blade/Tailwind UI: load `tailwindcss-development`.
+
+If a skill is hidden from the model list (`disable-model-invocation: true`), the user can still load it explicitly with `@skill-id`.
