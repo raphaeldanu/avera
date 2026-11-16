@@ -68,7 +68,33 @@ it('requires a wallet for income and expense transactions', function () {
     expect(Transaction::query()->count())->toBe(0);
 });
 
-it('creates a transfer transaction without a wallet', function () {
+it('creates a transfer transaction with two wallet entries', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $category = TransactionCategory::factory()->for($user)->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $destinationWallet = Wallet::factory()->for($user)->create();
+
+    Livewire::test(CreateTransaction::class)
+        ->fillForm([
+            ...transactionResourceFormData($category, $wallet),
+            'type' => TransactionType::Transfer->value,
+            'wallet_id' => null,
+            'transfer_from_wallet_id' => $wallet->id,
+            'transfer_to_wallet_id' => $destinationWallet->id,
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $transaction = Transaction::query()->sole();
+
+    expect($transaction->wallet_id)->toBeNull()
+        ->and($transaction->type)->toBe(TransactionType::Transfer)
+        ->and($transaction->transactionEntries()->count())->toBe(2);
+});
+
+it('requires both transfer wallets', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
@@ -80,14 +106,16 @@ it('creates a transfer transaction without a wallet', function () {
             ...transactionResourceFormData($category, $wallet),
             'type' => TransactionType::Transfer->value,
             'wallet_id' => null,
+            'transfer_from_wallet_id' => null,
+            'transfer_to_wallet_id' => null,
         ])
         ->call('create')
-        ->assertHasNoFormErrors();
+        ->assertHasFormErrors([
+            'transfer_from_wallet_id' => 'required',
+            'transfer_to_wallet_id' => 'required',
+        ]);
 
-    $transaction = Transaction::query()->sole();
-
-    expect($transaction->wallet_id)->toBeNull()
-        ->and($transaction->type)->toBe(TransactionType::Transfer);
+    expect(Transaction::query()->count())->toBe(0);
 });
 
 it('requires a positive transaction amount', function () {
@@ -145,6 +173,7 @@ it('clears the wallet when changing an expense to a transfer', function () {
 
     $category = TransactionCategory::factory()->for($user)->create();
     $wallet = Wallet::factory()->for($user)->create();
+    $destinationWallet = Wallet::factory()->for($user)->create();
 
     $transaction = Transaction::factory()->create([
         'user_id' => $user->id,
@@ -157,12 +186,15 @@ it('clears the wallet when changing an expense to a transfer', function () {
     Livewire::test(EditTransaction::class, ['record' => $transaction->getRouteKey()])
         ->fillForm([
             'type' => TransactionType::Transfer->value,
+            'transfer_from_wallet_id' => $wallet->id,
+            'transfer_to_wallet_id' => $destinationWallet->id,
         ])
         ->call('save')
         ->assertHasNoFormErrors();
 
     expect($transaction->refresh()->wallet_id)->toBeNull()
-        ->and($transaction->type)->toBe(TransactionType::Transfer);
+        ->and($transaction->type)->toBe(TransactionType::Transfer)
+        ->and($transaction->transactionEntries()->count())->toBe(2);
 });
 
 it('shows the transaction wallet in the transactions table', function () {

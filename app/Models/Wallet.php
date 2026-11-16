@@ -25,6 +25,8 @@ class Wallet extends Model
     {
         return [
             'type' => WalletType::class,
+            'initial_balance' => 'decimal:2',
+            'current_balance' => 'decimal:2',
         ];
     }
 
@@ -36,5 +38,10 @@ class Wallet extends Model
     public function transactionEntries(): HasMany
     {
         return $this->hasMany(TransactionEntry::class);
+    }
+
+    public function transactionLedgers(): HasMany
+    {
+        return $this->hasMany(TransactionLedger::class);
     }
 }

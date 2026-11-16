@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Transactions\Schemas;
 
 use App\Enums\TransactionType;
+use App\Models\Wallet;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -42,8 +43,11 @@ class TransactionForm
                     ->native(false)
                     ->live()
                     ->afterStateUpdated(function (mixed $state, Set $set): void {
-                        if (! static::isIncomeOrExpense($state)) {
+                        if (static::isTransfer($state)) {
                             $set('wallet_id', null);
+                        } else {
+                            $set('transfer_from_wallet_id', null);
+                            $set('transfer_to_wallet_id', null);
                         }
                     }),
                 Select::make('wallet_id')
@@ -59,6 +63,36 @@ class TransactionForm
                     ->visible(fn (Get $get): bool => static::isIncomeOrExpense($get('type')))
                     ->native(false)
                     ->preload()
+                    ->searchable(),
+                Select::make('transfer_from_wallet_id')
+                    ->label('From wallet')
+                    ->options(fn (): array => static::walletOptions())
+                    ->scopedExists(
+                        model: Wallet::class,
+                        column: 'id',
+                        modifyQueryUsing: fn (Builder $query) => $query
+                            ->where('user_id', Auth::id())
+                            ->where('is_active', true),
+                    )
+                    ->required(fn (Get $get): bool => static::isTransfer($get('type')))
+                    ->visible(fn (Get $get): bool => static::isTransfer($get('type')))
+                    ->different('transfer_to_wallet_id')
+                    ->native(false)
+                    ->searchable(),
+                Select::make('transfer_to_wallet_id')
+                    ->label('To wallet')
+                    ->options(fn (): array => static::walletOptions())
+                    ->scopedExists(
+                        model: Wallet::class,
+                        column: 'id',
+                        modifyQueryUsing: fn (Builder $query) => $query
+                            ->where('user_id', Auth::id())
+                            ->where('is_active', true),
+                    )
+                    ->required(fn (Get $get): bool => static::isTransfer($get('type')))
+                    ->visible(fn (Get $get): bool => static::isTransfer($get('type')))
+                    ->different('transfer_from_wallet_id')
+                    ->native(false)
                     ->searchable(),
                 TextInput::make('amount')
                     ->required()
@@ -81,10 +115,7 @@ class TransactionForm
      */
     public static function normalizeWalletId(array $data): array
     {
-        $type = $data['type'] ?? null;
-        $type = $type instanceof TransactionType
-            ? $type
-            : TransactionType::tryFrom((string) $type);
+        $type = static::parseType($data['type'] ?? null);
 
         if (! in_array($type, [TransactionType::Income, TransactionType::Expense], true)) {
             $data['wallet_id'] = null;
@@ -93,15 +124,36 @@ class TransactionForm
         return $data;
     }
 
+    /**
+     * @return array<int, string>
+     */
+    public static function walletOptions(): array
+    {
+        return Wallet::query()
+            ->where('user_id', Auth::id())
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->all();
+    }
+
     private static function isIncomeOrExpense(mixed $type): bool
     {
-        $type = $type instanceof TransactionType
-            ? $type
-            : TransactionType::tryFrom((string) $type);
-
-        return in_array($type, [
+        return in_array(static::parseType($type), [
             TransactionType::Income,
             TransactionType::Expense,
         ], true);
+    }
+
+    private static function isTransfer(mixed $type): bool
+    {
+        return static::parseType($type) === TransactionType::Transfer;
+    }
+
+    private static function parseType(mixed $type): ?TransactionType
+    {
+        return $type instanceof TransactionType
+            ? $type
+            : TransactionType::tryFrom((string) $type);
     }
 }
