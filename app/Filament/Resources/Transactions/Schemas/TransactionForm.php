@@ -30,7 +30,9 @@ class TransactionForm
                 DatePicker::make('transaction_date')
                     ->required()
                     ->native(false)
-                    ->defaultFocusedDate(now()->startOfMonth()),
+                    ->closeOnDateSelection()
+                    ->placeholder(now()->toDateString())
+                    ->defaultFocusedDate(now()->toDateString()),
                 Select::make('transaction_category_id')
                     ->relationship(
                         name: 'transactionCategory',
