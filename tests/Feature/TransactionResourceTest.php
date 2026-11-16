@@ -35,7 +35,10 @@ it('creates an expense transaction with one wallet', function () {
     $this->actingAs($user);
 
     $category = TransactionCategory::factory()->for($user)->create();
-    $wallet = Wallet::factory()->for($user)->create();
+    $wallet = Wallet::factory()->for($user)->create([
+        'initial_balance' => 100000,
+        'current_balance' => 100000,
+    ]);
 
     Livewire::test(CreateTransaction::class)
         ->fillForm(transactionResourceFormData($category, $wallet))
@@ -48,6 +51,82 @@ it('creates an expense transaction with one wallet', function () {
         ->and($transaction->wallet_id)->toBe($wallet->id)
         ->and($transaction->type)->toBe(TransactionType::Expense)
         ->and($transaction->amount)->toBe('100000.00');
+});
+
+it('shows the current balance of the selected wallet', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $wallet = Wallet::factory()->for($user)->create([
+        'initial_balance' => 150000,
+        'current_balance' => 150000,
+    ]);
+
+    Livewire::test(CreateTransaction::class)
+        ->set('data.wallet_id', $wallet->id)
+        ->assertFormSet(['wallet_id_balance' => '150.000']);
+});
+
+it('updates the shown balance when the wallet changes', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $wallet = Wallet::factory()->for($user)->create(['current_balance' => 150000]);
+    $otherWallet = Wallet::factory()->for($user)->create(['current_balance' => 250000]);
+
+    Livewire::test(CreateTransaction::class)
+        ->set('data.wallet_id', $wallet->id)
+        ->assertFormSet(['wallet_id_balance' => '150.000'])
+        ->set('data.wallet_id', $otherWallet->id)
+        ->assertFormSet(['wallet_id_balance' => '250.000']);
+});
+
+it('does not show another user wallet balance', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $wallet = Wallet::factory()->for($otherUser)->create(['current_balance' => 500000]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CreateTransaction::class)
+        ->set('data.wallet_id', $wallet->id)
+        ->assertFormSet(['wallet_id_balance' => null]);
+});
+
+it('shows the wallet balance when editing a transaction', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $category = TransactionCategory::factory()->for($user)->create();
+    $wallet = Wallet::factory()->for($user)->create(['current_balance' => 100000]);
+
+    $transaction = Transaction::factory()->create([
+        'user_id' => $user->id,
+        'transaction_category_id' => $category->id,
+        'wallet_id' => $wallet->id,
+        'type' => TransactionType::Expense,
+        'amount' => 50000,
+    ]);
+
+    Livewire::test(EditTransaction::class, ['record' => $transaction->getRouteKey()])
+        ->assertFormSet(['wallet_id_balance' => '100.000']);
+});
+
+it('shows the balance of both transfer wallets', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $wallet = Wallet::factory()->for($user)->create(['current_balance' => 100000]);
+    $destinationWallet = Wallet::factory()->for($user)->create(['current_balance' => 50000]);
+
+    Livewire::test(CreateTransaction::class)
+        ->set('data.type', TransactionType::Transfer->value)
+        ->set('data.transfer_from_wallet_id', $wallet->id)
+        ->set('data.transfer_to_wallet_id', $destinationWallet->id)
+        ->assertFormSet([
+            'transfer_from_wallet_id_balance' => '100.000',
+            'transfer_to_wallet_id_balance' => '50.000',
+        ]);
 });
 
 it('requires a wallet for income and expense transactions', function () {
@@ -73,7 +152,10 @@ it('creates a transfer transaction with two wallet entries', function () {
     $this->actingAs($user);
 
     $category = TransactionCategory::factory()->for($user)->create();
-    $wallet = Wallet::factory()->for($user)->create();
+    $wallet = Wallet::factory()->for($user)->create([
+        'initial_balance' => 100000,
+        'current_balance' => 100000,
+    ]);
     $destinationWallet = Wallet::factory()->for($user)->create();
 
     Livewire::test(CreateTransaction::class)
@@ -142,7 +224,10 @@ it('updates the wallet when editing a transaction', function () {
 
     $category = TransactionCategory::factory()->for($user)->create();
     $originalWallet = Wallet::factory()->for($user)->create();
-    $newWallet = Wallet::factory()->for($user)->create();
+    $newWallet = Wallet::factory()->for($user)->create([
+        'initial_balance' => 100000,
+        'current_balance' => 100000,
+    ]);
 
     $transaction = Transaction::factory()->create([
         'user_id' => $user->id,
@@ -172,7 +257,10 @@ it('clears the wallet when changing an expense to a transfer', function () {
     $this->actingAs($user);
 
     $category = TransactionCategory::factory()->for($user)->create();
-    $wallet = Wallet::factory()->for($user)->create();
+    $wallet = Wallet::factory()->for($user)->create([
+        'initial_balance' => 100000,
+        'current_balance' => 100000,
+    ]);
     $destinationWallet = Wallet::factory()->for($user)->create();
 
     $transaction = Transaction::factory()->create([
